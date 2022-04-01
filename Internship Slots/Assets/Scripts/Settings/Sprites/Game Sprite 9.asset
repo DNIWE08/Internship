@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: Game Sprite 9
   m_EditorClassIdentifier: 
   spriteImage: {fileID: 4830219810074551288, guid: fde45aa4120d65f4ab07974755fcee34, type: 3}
-  spriteCost: 0
+  spriteCost: 90

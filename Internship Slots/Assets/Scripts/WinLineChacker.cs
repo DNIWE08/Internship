@@ -12,12 +12,17 @@ public class WinLineChacker : MonoBehaviour
     [SerializeField] private Reel[] reels;
     private WinLineConfig[] winLinesData;
 
+    [SerializeField] private Text counterText;
+    private float prize = 0f;
+
     public static event Action OnReelsStop;
+    public static event Action OnForceSpinStart;
 
     private void Start()
     {
         winLinesData = gameConfig.WinLines;
         OnReelsStop += WinLinesAnimation;
+        OnForceSpinStart += ResetWinAnimation;
     }
 
     public List<Transform> CheckWinLines()
@@ -47,10 +52,14 @@ public class WinLineChacker : MonoBehaviour
         var winSymbols = CheckWinLines();
         if(CheckWinLines().Count > 0)
         {
+            prize = GetWinPrize(winSymbols[0]);
+            StartCoroutine(CounterCorutine());
             foreach(var symbol in CheckWinLines())
             {
                 var symbolParticle = symbol.GetChild(0);
                 symbolParticle.gameObject.SetActive(true);
+
+
                 symbol.DOScale(1.2f, 0.4f)
                     .SetLoops(4, LoopType.Yoyo)
                     .OnComplete(() =>
@@ -82,8 +91,54 @@ public class WinLineChacker : MonoBehaviour
         }
     }
 
+    private void ResetWinAnimation()
+    {
+        DOTween.KillAll();
+        for (var i = 0; i < reels.Length; i++)
+        {
+            foreach (var reelSymbol in reels[i].ReelSymbols)
+            {
+                var symbolParticle = reelSymbol.GetChild(0);
+                symbolParticle.gameObject.SetActive(false);
+                reelSymbol.GetComponent<Image>().color = Color.white;
+                reelSymbol.transform.localScale = Vector3.one;
+            }
+        }
+        counterText.text = "0";
+        prize = 0f;
+    }
+
+    private float GetWinPrize(Transform symbol)
+    {
+        var winSymbolName = symbol.GetComponent<Image>().sprite.name;
+        float prize = 0;
+        for(var i = 0; i < gameConfig.GameSprites.Length; i++)
+        {
+            var cfg = gameConfig.GameSprites;
+            if (cfg[i].SpriteImage.name == winSymbolName)
+            {
+                prize = cfg[i].SpriteCost;
+            }
+        }
+        return prize;
+    }
+
     public static void StartCheckAnimation()
     {
         OnReelsStop?.Invoke();
+    }
+
+    public static void ForceSpinStart()
+    {
+        OnForceSpinStart?.Invoke();
+    }
+
+    private IEnumerator CounterCorutine()
+    {
+        for(var i = 0; i <= prize; i++)
+        {
+            counterText.text = i.ToString();
+            yield return null;
+        }
     }
 }

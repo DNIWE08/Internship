@@ -33,6 +33,7 @@ public class ReelSpinner : MonoBehaviour
 
     public void StartSpin()
     {
+        WinLineChacker.ForceSpinStart();
         reelsState = ReelStateEnum.Start;
         for (int i = 0; i < reels.Length; i++)
         {
