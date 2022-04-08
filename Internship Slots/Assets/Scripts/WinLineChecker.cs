@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using DG.Tweening;
 using System;
 
-public class WinLineChacker : MonoBehaviour
+public class WinLineChecker : MonoBehaviour
 {
     [SerializeField] private GameConfig gameConfig;
 
@@ -15,11 +15,23 @@ public class WinLineChacker : MonoBehaviour
     [SerializeField] private Text counterText;
     private float prize = 0f;
 
+    private Dictionary<Transform, Transform> symbolsImage;
+
     public static event Action OnReelsStop;
     public static event Action OnForceSpinStart;
 
     private void Start()
     {
+        symbolsImage = new Dictionary<Transform, Transform>();
+        for(var i = 0; i < reels.Length; i++)
+        {
+            foreach (var reelSymbol in reels[i].ReelSymbols)
+            {
+                var symbolImage = reelSymbol.Find("Image");
+                symbolsImage.Add(reelSymbol, symbolImage);
+            }
+        }
+
         winLinesData = gameConfig.WinLines;
         OnReelsStop += WinLinesAnimation;
         OnForceSpinStart += ResetWinAnimation;
@@ -36,8 +48,8 @@ public class WinLineChacker : MonoBehaviour
                 var currentReelSymbol = reels[i].EndReelSymbols[line.WinLine[i] - 1];
                 checkWinLine[i] = currentReelSymbol;
             }
-            if(checkWinLine[0].GetComponent<Image>().sprite.name == checkWinLine[1].GetComponent<Image>().sprite.name &&
-                checkWinLine[1].GetComponent<Image>().sprite.name == checkWinLine[2].GetComponent<Image>().sprite.name)
+            if(checkWinLine[0].Find("Image").GetComponent<Image>().sprite.name == checkWinLine[1].Find("Image").GetComponent<Image>().sprite.name &&
+                checkWinLine[1].Find("Image").GetComponent<Image>().sprite.name == checkWinLine[2].Find("Image").GetComponent<Image>().sprite.name)
             {
                 winItems.Add(checkWinLine[0]);
                 winItems.Add(checkWinLine[1]);
@@ -60,7 +72,7 @@ public class WinLineChacker : MonoBehaviour
                 symbolParticle.gameObject.SetActive(true);
 
 
-                symbol.DOScale(1.2f, 0.4f)
+                symbolsImage[symbol].DOScale(1.2f, 0.4f)
                     .SetLoops(4, LoopType.Yoyo)
                     .OnComplete(() =>
                     {
@@ -85,7 +97,7 @@ public class WinLineChacker : MonoBehaviour
             {
                 if (reelSymbol != winSymbols[i])
                 {
-                    reelSymbol.GetComponent<Image>().color = color;
+                    symbolsImage[reelSymbol].GetComponent<Image>().color = color;
                 }
             }
         }
@@ -100,8 +112,8 @@ public class WinLineChacker : MonoBehaviour
             {
                 var symbolParticle = reelSymbol.GetChild(0);
                 symbolParticle.gameObject.SetActive(false);
-                reelSymbol.GetComponent<Image>().color = Color.white;
-                reelSymbol.transform.localScale = Vector3.one;
+                symbolsImage[reelSymbol].GetComponent<Image>().color = Color.white;
+                symbolsImage[reelSymbol].transform.localScale = Vector3.one;
             }
         }
         counterText.text = "0";
@@ -110,7 +122,7 @@ public class WinLineChacker : MonoBehaviour
 
     private float GetWinPrize(Transform symbol)
     {
-        var winSymbolName = symbol.GetComponent<Image>().sprite.name;
+        var winSymbolName = symbolsImage[symbol].GetComponent<Image>().sprite.name;
         float prize = 0;
         for(var i = 0; i < gameConfig.GameSprites.Length; i++)
         {
@@ -138,7 +150,8 @@ public class WinLineChacker : MonoBehaviour
         for(var i = 0; i <= prize; i++)
         {
             counterText.text = i.ToString();
-            yield return null;
+            //yield return null;
+            yield return new WaitForSeconds(0.005f);
         }
     }
 }

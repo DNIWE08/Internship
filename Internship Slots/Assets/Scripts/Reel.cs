@@ -12,7 +12,8 @@ public class Reel : MonoBehaviour
     [SerializeField] private RectTransform[] reelSymbols;
     private List<Transform> endReelSymbols;
 
-    //[SerializeField] private Sprite[] sprites;
+    private Dictionary<Transform, Image> symbolsDictionary;
+
     private int finalScreenNumber = 0;
     private int currentFinalSymbol = 0;
     internal bool isFinalSpin = false;
@@ -20,7 +21,7 @@ public class Reel : MonoBehaviour
 
     [SerializeField] private float endPosition;
     private float mainCanvasScale;
-    private float symbolHeigth;
+    private float symbolHeight;
 
     internal Transform[] ReelSymbols { get => reelSymbols; }
     internal List<Transform> EndReelSymbols => endReelSymbols;
@@ -28,9 +29,17 @@ public class Reel : MonoBehaviour
 
     private void Start()
     {
-        symbolHeigth = reelSymbols[0].rect.height;
+        symbolHeight = reelSymbols[0].rect.height;
         mainCanvasScale = mainCanvasRT.lossyScale.y;
         endReelSymbols = new List<Transform>();
+
+        symbolsDictionary = new Dictionary<Transform, Image>();
+        for(int i = 0; i < reelSymbols.Length; i++)
+        {
+            var symbolImage = reelSymbols[i].Find("Image").GetComponent<Image>();
+            symbolsDictionary.Add(reelSymbols[i], symbolImage);
+        }
+
         foreach (var symbol in reelSymbols)
         {
             ChangeSprite(symbol);
@@ -53,7 +62,7 @@ public class Reel : MonoBehaviour
 
     private void MoveTop(Transform reelT)
     {
-        var topSymbolPosition = reelT.localPosition.y + symbolHeigth * reelSymbols.Length;
+        var topSymbolPosition = reelT.localPosition.y + symbolHeight * reelSymbols.Length;
         var topPosition = new Vector3(reelT.localPosition.x, topSymbolPosition);
         reelT.localPosition = topPosition;
     }
@@ -62,15 +71,15 @@ public class Reel : MonoBehaviour
     {
         if (isFinalSpin)
         {
-            reelT.GetComponent<Image>().sprite = GetFinalSprite();
-                if (endReelSymbols.Count < 3)
-                {
-                    endReelSymbols.Add(reelT);
-                }
+            symbolsDictionary[reelT].sprite = GetFinalSprite();
+            if (endReelSymbols.Count < 3)
+            {
+                endReelSymbols.Add(reelT);
+            }
         }
         else
         {
-            reelT.GetComponent<Image>().sprite = GetRandomSprite();
+            symbolsDictionary[reelT].sprite = GetRandomSprite();
         }
     }
 
