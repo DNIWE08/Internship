@@ -15,19 +15,19 @@ public class WinLineChecker : MonoBehaviour
     [SerializeField] private Text counterText;
     private float prize = 0f;
 
-    private Dictionary<Transform, Symbol> symbolsImage;
+    private Dictionary<Transform, Symbol> symbolsDictionary;
 
     public static event Action OnReelsStop;
     public static event Action OnForceSpinStart;
 
     private void Start()
     {
-        symbolsImage = new Dictionary<Transform, Symbol>();
+        symbolsDictionary = new Dictionary<Transform, Symbol>();
         for(var i = 0; i < reels.Length; i++)
         {
             foreach (var reelSymbol in reels[i].ReelSymbols)
             {
-                symbolsImage.Add(reelSymbol.SymbolRT, reelSymbol);
+                symbolsDictionary.Add(reelSymbol.SymbolRT, reelSymbol);
             }
         }
 
@@ -47,8 +47,10 @@ public class WinLineChecker : MonoBehaviour
                 var currentReelSymbol = reels[i].EndReelSymbols[line.WinLine[i] - 1];
                 checkWinLine[i] = currentReelSymbol;
             }
-            if(checkWinLine[0].GetComponentInChildren<Image>().sprite.name == checkWinLine[1].GetComponentInChildren<Image>().sprite.name &&
-                checkWinLine[1].GetComponentInChildren<Image>().sprite.name == checkWinLine[2].GetComponentInChildren<Image>().sprite.name)
+            if(symbolsDictionary[checkWinLine[0]].SymbolImage.sprite.name ==
+                symbolsDictionary[checkWinLine[1]].SymbolImage.sprite.name &&
+                symbolsDictionary[checkWinLine[1]].SymbolImage.sprite.name == 
+                symbolsDictionary[checkWinLine[2]].SymbolImage.sprite.name)
             {
                 winItems.Add(checkWinLine[0]);
                 winItems.Add(checkWinLine[1]);
@@ -67,7 +69,7 @@ public class WinLineChecker : MonoBehaviour
             StartCoroutine(CounterCorutine());
             foreach(var symbol in CheckWinLines())
             {
-                var symbolParticle = symbolsImage[symbol].SymbolParticle;
+                var symbolParticle = symbolsDictionary[symbol].SymbolParticle;
                 symbolParticle.SetActive(true);
 
 
@@ -122,7 +124,7 @@ public class WinLineChecker : MonoBehaviour
 
     private float GetWinPrize(Transform symbol)
     {
-        var winSymbolName = symbolsImage[symbol].SymbolImage.sprite.name;
+        var winSymbolName = symbolsDictionary[symbol].SymbolImage.sprite.name;
         float prize = 0;
         for(var i = 0; i < gameConfig.GameSprites.Length; i++)
         {

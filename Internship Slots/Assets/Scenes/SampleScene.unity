@@ -1691,7 +1691,7 @@ MonoBehaviour:
   - {fileID: 868282583}
   - {fileID: 1853078623}
   - {fileID: 2041341120}
-  spinCount: 4
+  spinCount: 5
   spinDuration: 1
   symbolsOnReel: 3
   startBtn: {fileID: 273089496}
