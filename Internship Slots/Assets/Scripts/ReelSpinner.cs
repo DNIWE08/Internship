@@ -9,6 +9,7 @@ public class ReelSpinner : MonoBehaviour
     [SerializeField] private Reel[] reels;
     [SerializeField] private int spinCount;
     [SerializeField] private float spinDuration = 1;
+    [SerializeField] private int symbolsOnReel;
 
     [SerializeField] public Button startBtn;
     [SerializeField] public Button stopBtn;
@@ -25,9 +26,11 @@ public class ReelSpinner : MonoBehaviour
     private void Start()
     {
         symbolHeight = reels[1].ReelSymbols[1].GetComponent<RectTransform>().rect.height;
+
         spinIteration = -symbolHeight * reels[1].ReelSymbols.Length;
 
         reelsDictionary = new Dictionary<Transform, Reel>();
+
         for (var i = 0; i < reels.Length; i++)
         {
             var reelT = reels[i].transform;
@@ -42,12 +45,14 @@ public class ReelSpinner : MonoBehaviour
 
     public void StartSpin()
     {
-        WinLineChecker.ForceSpinStart();
         reelsState = ReelStateEnum.Start;
+        WinLineChecker.ForceSpinStart();
         for (int i = 0; i < reels.Length; i++)
         {
-            var reelT = reels[i].transform;
-            reels[i].isFinalSpin = false;
+            var currentReel = reels[i];
+            currentReel.isFinalSpin = false;
+
+            var reelT = currentReel.transform;
             reelT.DOLocalMoveY(spinIteration, 0.6f)
             .SetEase(Ease.InCubic)
             .SetDelay(i * 0.2f)
@@ -77,15 +82,15 @@ public class ReelSpinner : MonoBehaviour
     {
         DOTween.Kill(reelT);
         var currentReelPosY = reelT.localPosition.y;
-        var stoppingDistance = currentReelPosY - symbolHeight * 3;
+        var stoppingDistance = currentReelPosY - symbolHeight * symbolsOnReel;
         reelT.DOLocalMoveY(stoppingDistance, 1f)
             .SetEase(Ease.OutCubic)
             .OnComplete(() =>
             {
-                if(reelsDictionary[reelT].reelId == 3)
+                if(reelsDictionary[reelT].reelId == reels.Length)
                 {
-                    reelsState = ReelStateEnum.Ready;
                     WinLineChecker.StartCheckAnimation();
+                    reelsState = ReelStateEnum.Ready;
                 }
                 PrepareReel(reelT);
             });
@@ -119,7 +124,7 @@ public class ReelSpinner : MonoBehaviour
 
     private float CalculateExtraDistance(float currentReelPositionY)
     {
-        var traveledDistance = 0 - currentReelPositionY;
+        var traveledDistance = -currentReelPositionY;
         var partOfUpperSymbol = traveledDistance % symbolHeight;
         var extraDistance = symbolHeight - partOfUpperSymbol;
 
@@ -129,7 +134,7 @@ public class ReelSpinner : MonoBehaviour
     private void PrepareReel(Transform reelT)
     {
         var prevReelPosY = reelT.localPosition.y;
-        var traveledReelDistance = -(0 + prevReelPosY);
+        var traveledReelDistance = -prevReelPosY;
         reelT.localPosition = new Vector3(reelT.localPosition.x, 0);
         reelsDictionary[reelT].ResetPosition(traveledReelDistance);
     }

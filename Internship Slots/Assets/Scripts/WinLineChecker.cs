@@ -15,20 +15,19 @@ public class WinLineChecker : MonoBehaviour
     [SerializeField] private Text counterText;
     private float prize = 0f;
 
-    private Dictionary<Transform, Transform> symbolsImage;
+    private Dictionary<Transform, Symbol> symbolsImage;
 
     public static event Action OnReelsStop;
     public static event Action OnForceSpinStart;
 
     private void Start()
     {
-        symbolsImage = new Dictionary<Transform, Transform>();
+        symbolsImage = new Dictionary<Transform, Symbol>();
         for(var i = 0; i < reels.Length; i++)
         {
             foreach (var reelSymbol in reels[i].ReelSymbols)
             {
-                var symbolImage = reelSymbol.Find("Image");
-                symbolsImage.Add(reelSymbol, symbolImage);
+                symbolsImage.Add(reelSymbol.SymbolRT, reelSymbol);
             }
         }
 
@@ -48,8 +47,8 @@ public class WinLineChecker : MonoBehaviour
                 var currentReelSymbol = reels[i].EndReelSymbols[line.WinLine[i] - 1];
                 checkWinLine[i] = currentReelSymbol;
             }
-            if(checkWinLine[0].Find("Image").GetComponent<Image>().sprite.name == checkWinLine[1].Find("Image").GetComponent<Image>().sprite.name &&
-                checkWinLine[1].Find("Image").GetComponent<Image>().sprite.name == checkWinLine[2].Find("Image").GetComponent<Image>().sprite.name)
+            if(checkWinLine[0].GetComponentInChildren<Image>().sprite.name == checkWinLine[1].GetComponentInChildren<Image>().sprite.name &&
+                checkWinLine[1].GetComponentInChildren<Image>().sprite.name == checkWinLine[2].GetComponentInChildren<Image>().sprite.name)
             {
                 winItems.Add(checkWinLine[0]);
                 winItems.Add(checkWinLine[1]);
@@ -68,16 +67,16 @@ public class WinLineChecker : MonoBehaviour
             StartCoroutine(CounterCorutine());
             foreach(var symbol in CheckWinLines())
             {
-                var symbolParticle = symbol.GetChild(0);
-                symbolParticle.gameObject.SetActive(true);
+                var symbolParticle = symbolsImage[symbol].SymbolParticle;
+                symbolParticle.SetActive(true);
 
 
-                symbolsImage[symbol].DOScale(1.2f, 0.4f)
+                symbol.DOScale(1.2f, 0.4f)
                     .SetLoops(4, LoopType.Yoyo)
                     .OnComplete(() =>
                     {
                         FillSymbols(winSymbols, Color.white);
-                        symbolParticle.gameObject.SetActive(false);
+                        symbolParticle.SetActive(false);
                     });
                 FillSymbols(winSymbols, Color.grey);
             }
@@ -95,9 +94,9 @@ public class WinLineChecker : MonoBehaviour
         {
             foreach (var reelSymbol in reels[i].ReelSymbols)
             {
-                if (reelSymbol != winSymbols[i])
+                if (reelSymbol.SymbolRT != winSymbols[i])
                 {
-                    symbolsImage[reelSymbol].GetComponent<Image>().color = color;
+                    reelSymbol.SymbolImage.color = color;
                 }
             }
         }
@@ -110,19 +109,20 @@ public class WinLineChecker : MonoBehaviour
         {
             foreach (var reelSymbol in reels[i].ReelSymbols)
             {
-                var symbolParticle = reelSymbol.GetChild(0);
-                symbolParticle.gameObject.SetActive(false);
-                symbolsImage[reelSymbol].GetComponent<Image>().color = Color.white;
-                symbolsImage[reelSymbol].transform.localScale = Vector3.one;
+                var symbolParticle = reelSymbol.SymbolParticle;
+                symbolParticle.SetActive(false);
+
+                reelSymbol.SymbolImage.color = Color.white;
+                reelSymbol.transform.localScale = Vector3.one;
             }
         }
-        counterText.text = "0";
         prize = 0f;
+        counterText.text = prize.ToString();
     }
 
     private float GetWinPrize(Transform symbol)
     {
-        var winSymbolName = symbolsImage[symbol].GetComponent<Image>().sprite.name;
+        var winSymbolName = symbolsImage[symbol].SymbolImage.sprite.name;
         float prize = 0;
         for(var i = 0; i < gameConfig.GameSprites.Length; i++)
         {
