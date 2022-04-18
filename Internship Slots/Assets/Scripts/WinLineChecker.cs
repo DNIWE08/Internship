@@ -17,12 +17,21 @@ public class WinLineChecker : MonoBehaviour
     private readonly int symbolOnReel = 3;
 
     private Dictionary<Transform, Symbol> symbolsDictionary;
+    private Dictionary<Sprite, float> prizeDictionary;
 
     public static event Action OnReelsStop;
     public static event Action OnForceSpinStart;
 
     private void Start()
     {
+        prizeDictionary = new Dictionary<Sprite, float>();
+
+        for(var i = 0; i < gameConfig.GameSprites.Length; i++)
+        {
+            var sprite = gameConfig.GameSprites[i];
+            prizeDictionary.Add(sprite.SpriteImage, sprite.SpriteCost);
+        }
+
         symbolsDictionary = new Dictionary<Transform, Symbol>();
         for(var i = 0; i < reels.Length; i++)
         {
@@ -123,17 +132,14 @@ public class WinLineChecker : MonoBehaviour
 
     private float GetWinPrize(List<Transform> symbols)
     {
-        var winSymbolName = symbolsDictionary[symbols[0]].SymbolImage.sprite.name;
         float prize = 0;
-        for(var i = 0; i < gameConfig.GameSprites.Length; i++)
+        for(var i = 0; i < symbols.Count; i++)
         {
-            var cfg = gameConfig.GameSprites;
-            if (cfg[i].SpriteImage.name == winSymbolName)
-            {
-                prize = cfg[i].SpriteCost * (symbols.Count / symbolOnReel);
-            }
+            var symbol = symbolsDictionary[symbols[i]].SymbolImage.sprite;
+            var currentSrite = prizeDictionary[symbol];
+            prize += currentSrite;
         }
-        return prize;
+        return prize / symbolOnReel;
     }
 
     public static void StartCheckAnimation()
