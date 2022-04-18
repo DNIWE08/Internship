@@ -63,24 +63,28 @@ public class WinLineChecker : MonoBehaviour
     public void WinLinesAnimation()
     {
         var winSymbols = CheckWinLines();
-        if(CheckWinLines().Count > 0)
+        if(winSymbols.Count > 0)
         {
             prize = GetWinPrize(winSymbols[0]);
             StartCoroutine(CounterCorutine());
-            foreach(var symbol in CheckWinLines())
+            FillSymbols(Color.grey);
+
+            foreach (var symbol in winSymbols)
             {
                 var symbolParticle = symbolsDictionary[symbol].SymbolParticle;
                 symbolParticle.SetActive(true);
+                symbolsDictionary[symbol].SymbolImage.color = Color.white;
 
+                //FillSymbols(winSymbols, Color.grey);
 
                 symbol.DOScale(1.2f, 0.4f)
                     .SetLoops(4, LoopType.Yoyo)
                     .OnComplete(() =>
                     {
-                        FillSymbols(winSymbols, Color.white);
+                        // FillSymbols(winSymbols, Color.white);
+                        FillSymbols(Color.white);
                         symbolParticle.SetActive(false);
                     });
-                FillSymbols(winSymbols, Color.grey);
             }
         }
 
@@ -90,16 +94,13 @@ public class WinLineChecker : MonoBehaviour
         }
     }
 
-    private void FillSymbols(List<Transform> winSymbols, Color color)
+    private void FillSymbols(Color color)
     {
         for (var i = 0; i < reels.Length; i++)
         {
             foreach (var reelSymbol in reels[i].ReelSymbols)
             {
-                if (reelSymbol.SymbolRT != winSymbols[i])
-                {
-                    reelSymbol.SymbolImage.color = color;
-                }
+                reelSymbol.SymbolImage.color = color;
             }
         }
     }
