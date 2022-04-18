@@ -9,21 +9,33 @@ public class ReelSpinner : MonoBehaviour
     [SerializeField] private Reel[] reels;
     [SerializeField] private int spinCount;
     [SerializeField] private float spinDuration = 1;
+    [SerializeField] private int symbolsOnReel;
 
-    [SerializeField] public GameObject startBtn;
-    [SerializeField] public GameObject stopBtn;
+    [SerializeField] public Button startBtn;
+    [SerializeField] public Button stopBtn;
 
     private float spinIteration;
+    private float symbolHeight;
+
+    private Dictionary<Transform, Reel> reelsDictionary;
 
     private ReelStateEnum reelsState = ReelStateEnum.Ready;
     internal ReelStateEnum ReelsState { get => reelsState; set => reelsState = value; }
 
-    private float symbolHeight;
 
     private void Start()
     {
         symbolHeight = reels[1].ReelSymbols[1].GetComponent<RectTransform>().rect.height;
+
         spinIteration = -symbolHeight * reels[1].ReelSymbols.Length;
+
+        reelsDictionary = new Dictionary<Transform, Reel>();
+
+        for (var i = 0; i < reels.Length; i++)
+        {
+            var reelT = reels[i].transform;
+            reelsDictionary.Add(reelT, reels[i]);
+        }
     }
 
     private void Update()
@@ -34,10 +46,13 @@ public class ReelSpinner : MonoBehaviour
     public void StartSpin()
     {
         reelsState = ReelStateEnum.Start;
+        WinLineChecker.ForceSpinStart();
         for (int i = 0; i < reels.Length; i++)
         {
-            var reelT = reels[i].transform;
-            reelT.GetComponent<Reel>().isFinalSpin = false;
+            var currentReel = reels[i];
+            currentReel.isFinalSpin = false;
+
+            var reelT = currentReel.transform;
             reelT.DOLocalMoveY(spinIteration, 0.6f)
             .SetEase(Ease.InCubic)
             .SetDelay(i * 0.2f)
@@ -65,19 +80,17 @@ public class ReelSpinner : MonoBehaviour
 
     public void ScrollStop(Transform reelT)
     {
-        //reelsState = ReelStateEnum.Stop;
-        //reelT.GetComponent<Reel>().isFinalSpin = true;
         DOTween.Kill(reelT);
         var currentReelPosY = reelT.localPosition.y;
-        var stoppingDistance = currentReelPosY - symbolHeight * 3;
+        var stoppingDistance = currentReelPosY - symbolHeight * symbolsOnReel;
         reelT.DOLocalMoveY(stoppingDistance, 1f)
             .SetEase(Ease.OutCubic)
             .OnComplete(() =>
             {
-                if(reelT.GetComponent<Reel>().reelId == 3)
+                if(reelsDictionary[reelT].reelId == reels.Length)
                 {
+                    WinLineChecker.StartCheckAnimation();
                     reelsState = ReelStateEnum.Ready;
-                    WinLineChacker.StartCheckAnimation();
                 }
                 PrepareReel(reelT);
             });
@@ -96,26 +109,22 @@ public class ReelSpinner : MonoBehaviour
             .OnComplete(() => {
                 ScrollStop(reelT);
                 reelsState = ReelStateEnum.Stop;
-                reelT.GetComponent<Reel>().isFinalSpin = true;
-    });
+                reelsDictionary[reelT].isFinalSpin = true;
+            });
     }
 
     public void ForceStopReels()
     {
-        //DOTween.KillAll();
         foreach (var reel in reels)
         {
-            //if(reel.isFinalSpin == false)
-            //{
-                var reelT = reel.GetComponent<Transform>();
-                CorrectSpin(reelT);
-            //}
+            var reelT = reel.GetComponent<Transform>();
+            CorrectSpin(reelT);
         }
     }
 
     private float CalculateExtraDistance(float currentReelPositionY)
     {
-        var traveledDistance = 0 - currentReelPositionY;
+        var traveledDistance = -currentReelPositionY;
         var partOfUpperSymbol = traveledDistance % symbolHeight;
         var extraDistance = symbolHeight - partOfUpperSymbol;
 
@@ -125,44 +134,35 @@ public class ReelSpinner : MonoBehaviour
     private void PrepareReel(Transform reelT)
     {
         var prevReelPosY = reelT.localPosition.y;
-        var traveledReelDistance = -(0 + prevReelPosY);
+        var traveledReelDistance = -prevReelPosY;
         reelT.localPosition = new Vector3(reelT.localPosition.x, 0);
-        reelT.GetComponent<Reel>().ResetPosition(traveledReelDistance);
+        reelsDictionary[reelT].ResetPosition(traveledReelDistance);
     }
 
     private void CheckButtonState()
     {
-        if (reelsState == ReelStateEnum.Ready)
+        switch (reelsState)
         {
-            startBtn.GetComponent<Button>().interactable = true;
-            startBtn.transform.localScale = Vector3.one;
-            stopBtn.GetComponent<Button>().interactable = false;
-            stopBtn.transform.localScale = Vector3.zero;
+            case ReelStateEnum.Ready:
+                ChangeButtonState(true, Vector3.one, false, Vector3.zero);
+                break;
+            case ReelStateEnum.Start:
+                ChangeButtonState(false, Vector3.one, false, Vector3.zero);
+                break;
+            case ReelStateEnum.Spin:
+                ChangeButtonState(false, Vector3.zero, true, Vector3.one);
+                break;
+            case ReelStateEnum.Stop:
+                ChangeButtonState(false, Vector3.zero, false, Vector3.one);
+                break;
         }
-        if (reelsState == ReelStateEnum.Start)
-        {
-            startBtn.GetComponent<Button>().interactable = false;
-        }
-        if (reelsState == ReelStateEnum.Spin)
-        {
-            startBtn.transform.localScale = Vector3.zero;
-            stopBtn.transform.localScale = Vector3.one;
-            stopBtn.GetComponent<Button>().interactable = true;
-        }
-        if (reelsState == ReelStateEnum.Stop)
-        {
-            stopBtn.GetComponent<Button>().interactable = false;
-        }
-        if (reelsState == ReelStateEnum.ForceStop)
-        {
-            stopBtn.GetComponent<Button>().interactable = false;
-        }
-        //if (reelsState == ReelStateEnum.EndAnimation)
-        //{
-        //    startBtn.GetComponent<Button>().interactable = false;
-        //    startBtn.transform.localScale = Vector3.one;
-        //    stopBtn.GetComponent<Button>().interactable = false;
-        //    stopBtn.transform.localScale = Vector3.zero;
-        //}
+    }
+
+    private void ChangeButtonState(bool startBtnInteractable, Vector3 startBtnScale, bool stopBtnInteractable, Vector3 stopBtnScale)
+    {
+        startBtn.interactable = startBtnInteractable;
+        startBtn.transform.localScale = startBtnScale;
+        stopBtn.interactable = stopBtnInteractable;
+        stopBtn.transform.localScale = stopBtnScale;
     }
 }

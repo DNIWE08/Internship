@@ -9,31 +9,39 @@ public class Reel : MonoBehaviour
     [SerializeField] private GameConfig gameConfig;
     [SerializeField] public int reelId;
 
-    [SerializeField] private RectTransform[] reelSymbols;
+    [SerializeField] private Symbol[] reelSymbols;
     private List<Transform> endReelSymbols;
 
-    //[SerializeField] private Sprite[] sprites;
+    private Dictionary<Transform, Symbol> symbolsDictionary;
+
+    [SerializeField] private int symbolsOnReel;
     private int finalScreenNumber = 0;
     private int currentFinalSymbol = 0;
     internal bool isFinalSpin = false;
 
-
     [SerializeField] private float endPosition;
     private float mainCanvasScale;
-    private float symbolHeigth;
+    private float symbolHeight;
 
-    internal Transform[] ReelSymbols { get => reelSymbols; }
+    internal Symbol[] ReelSymbols { get => reelSymbols; }
     internal List<Transform> EndReelSymbols => endReelSymbols;
 
 
     private void Start()
     {
-        symbolHeigth = reelSymbols[0].rect.height;
+        symbolHeight = reelSymbols[0].GetComponent<RectTransform>().rect.height;
         mainCanvasScale = mainCanvasRT.lossyScale.y;
         endReelSymbols = new List<Transform>();
+
+        symbolsDictionary = new Dictionary<Transform, Symbol>();
+        for(int i = 0; i < reelSymbols.Length; i++)
+        {
+            symbolsDictionary.Add(reelSymbols[i].SymbolRT, reelSymbols[i]);
+        }
+
         foreach (var symbol in reelSymbols)
         {
-            ChangeSprite(symbol);
+            ChangeSprite(symbol.SymbolRT);
         }
     }
 
@@ -53,7 +61,7 @@ public class Reel : MonoBehaviour
 
     private void MoveTop(Transform reelT)
     {
-        var topSymbolPosition = reelT.localPosition.y + symbolHeigth * reelSymbols.Length;
+        var topSymbolPosition = reelT.localPosition.y + symbolHeight * reelSymbols.Length;
         var topPosition = new Vector3(reelT.localPosition.x, topSymbolPosition);
         reelT.localPosition = topPosition;
     }
@@ -62,21 +70,21 @@ public class Reel : MonoBehaviour
     {
         if (isFinalSpin)
         {
-            reelT.GetComponent<Image>().sprite = GetFinalSprite();
-                if (endReelSymbols.Count < 3)
-                {
-                    endReelSymbols.Add(reelT);
-                }
+            symbolsDictionary[reelT].SymbolImage.sprite = GetFinalSprite();
+            if (endReelSymbols.Count < symbolsOnReel)
+            {
+                endReelSymbols.Add(reelT);
+            }
         }
         else
         {
-            reelT.GetComponent<Image>().sprite = GetRandomSprite();
+            symbolsDictionary[reelT].SymbolImage.sprite = GetRandomSprite();
         }
     }
 
     private Sprite GetFinalSprite()
     {
-        var finalScreenItemIndex = currentFinalSymbol + (reelId - 1) * 3;
+        var finalScreenItemIndex = currentFinalSymbol + (reelId - 1) * symbolsOnReel;
         var currentFinalScreen = gameConfig.FinalScreens[finalScreenNumber].FinalScreenData;
         if (finalScreenItemIndex >= currentFinalScreen.Length)
         {
