@@ -14,6 +14,7 @@ public class WinLineChecker : MonoBehaviour
 
     [SerializeField] private Text counterText;
     private float prize = 0f;
+    private readonly int symbolOnReel = 3;
 
     private Dictionary<Transform, Symbol> symbolsDictionary;
 
@@ -65,7 +66,7 @@ public class WinLineChecker : MonoBehaviour
         var winSymbols = CheckWinLines();
         if(winSymbols.Count > 0)
         {
-            prize = GetWinPrize(winSymbols[0]);
+            prize = GetWinPrize(winSymbols);
             StartCoroutine(CounterCorutine());
             FillSymbols(Color.grey);
 
@@ -75,13 +76,10 @@ public class WinLineChecker : MonoBehaviour
                 symbolParticle.SetActive(true);
                 symbolsDictionary[symbol].SymbolImage.color = Color.white;
 
-                //FillSymbols(winSymbols, Color.grey);
-
                 symbol.DOScale(1.2f, 0.4f)
                     .SetLoops(4, LoopType.Yoyo)
                     .OnComplete(() =>
                     {
-                        // FillSymbols(winSymbols, Color.white);
                         FillSymbols(Color.white);
                         symbolParticle.SetActive(false);
                     });
@@ -123,16 +121,16 @@ public class WinLineChecker : MonoBehaviour
         counterText.text = prize.ToString();
     }
 
-    private float GetWinPrize(Transform symbol)
+    private float GetWinPrize(List<Transform> symbols)
     {
-        var winSymbolName = symbolsDictionary[symbol].SymbolImage.sprite.name;
+        var winSymbolName = symbolsDictionary[symbols[0]].SymbolImage.sprite.name;
         float prize = 0;
         for(var i = 0; i < gameConfig.GameSprites.Length; i++)
         {
             var cfg = gameConfig.GameSprites;
             if (cfg[i].SpriteImage.name == winSymbolName)
             {
-                prize = cfg[i].SpriteCost;
+                prize = cfg[i].SpriteCost * (symbols.Count / symbolOnReel);
             }
         }
         return prize;
