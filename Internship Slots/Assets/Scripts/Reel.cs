@@ -8,6 +8,7 @@ public class Reel : MonoBehaviour
     [SerializeField] private RectTransform mainCanvasRT;
     [SerializeField] private GameConfig gameConfig;
     [SerializeField] public int reelId;
+    [SerializeField] private GameSprite scatterSymbol;
 
     [SerializeField] private Symbol[] reelSymbols;
     private List<Transform> endReelSymbols;
@@ -18,6 +19,7 @@ public class Reel : MonoBehaviour
     private int finalScreenNumber = 0;
     private int currentFinalSymbol = 0;
     internal bool isFinalSpin = false;
+    internal bool hasScatter = false;
 
     [SerializeField] private float endPosition;
     private float mainCanvasScale;
@@ -70,10 +72,15 @@ public class Reel : MonoBehaviour
     {
         if (isFinalSpin)
         {
-            symbolsDictionary[reelT].SymbolImage.sprite = GetFinalSprite();
+            var symbol = symbolsDictionary[reelT];
+            symbol.SymbolImage.sprite = GetFinalSprite();
             if (endReelSymbols.Count < symbolsOnReel)
             {
                 endReelSymbols.Add(reelT);
+            }
+            if(symbol.SymbolImage.sprite == scatterSymbol.SpriteImage)
+            {
+                hasScatter = true;
             }
         }
         else
@@ -130,5 +137,10 @@ public class Reel : MonoBehaviour
     public void ClearEndReels()
     {
         endReelSymbols.Clear();
+    }
+
+    public void ResetScatter()
+    {
+        hasScatter = false;
     }
 }

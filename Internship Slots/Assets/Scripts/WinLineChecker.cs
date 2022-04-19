@@ -8,6 +8,7 @@ using System;
 public class WinLineChecker : MonoBehaviour
 {
     [SerializeField] private GameConfig gameConfig;
+    private FreeSpinChecker freeSpinComponent;
 
     [SerializeField] private Reel[] reels;
     private WinLineConfig[] winLinesData;
@@ -24,6 +25,8 @@ public class WinLineChecker : MonoBehaviour
 
     private void Start()
     {
+        freeSpinComponent = gameObject.GetComponent<FreeSpinChecker>();
+
         prizeDictionary = new Dictionary<Sprite, float>();
 
         for(var i = 0; i < gameConfig.GameSprites.Length; i++)
@@ -76,6 +79,10 @@ public class WinLineChecker : MonoBehaviour
         if(winSymbols.Count > 0)
         {
             prize = GetWinPrize(winSymbols);
+            if (freeSpinComponent.isFreeSpin)
+            {
+                freeSpinComponent.TotalFreeSpinPrize += prize;
+            }
             StartCoroutine(CounterCorutine());
             FillSymbols(Color.grey);
 

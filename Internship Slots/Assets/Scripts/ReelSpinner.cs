@@ -17,14 +17,20 @@ public class ReelSpinner : MonoBehaviour
     private float spinIteration;
     private float symbolHeight;
 
+    private FreeSpinChecker freeSpinComponent;
+    private bool isFinalFreeSpin = false;
+
     private Dictionary<Transform, Reel> reelsDictionary;
 
     private ReelStateEnum reelsState = ReelStateEnum.Ready;
+
     internal ReelStateEnum ReelsState { get => reelsState; set => reelsState = value; }
 
 
     private void Start()
     {
+        freeSpinComponent = gameObject.GetComponent<FreeSpinChecker>();
+
         symbolHeight = reels[1].ReelSymbols[1].GetComponent<RectTransform>().rect.height;
 
         spinIteration = -symbolHeight * reels[1].ReelSymbols.Length;
@@ -45,12 +51,15 @@ public class ReelSpinner : MonoBehaviour
 
     public void StartSpin()
     {
-        reelsState = ReelStateEnum.Start;
+        StartBtnsState();
+
         WinLineChecker.ForceSpinStart();
+        
         for (int i = 0; i < reels.Length; i++)
         {
             var currentReel = reels[i];
             currentReel.isFinalSpin = false;
+            currentReel.ResetScatter();
 
             var reelT = currentReel.transform;
             reelT.DOLocalMoveY(spinIteration, 0.6f)
@@ -90,9 +99,19 @@ public class ReelSpinner : MonoBehaviour
                 if(reelsDictionary[reelT].reelId == reels.Length)
                 {
                     WinLineChecker.StartCheckAnimation();
+                    FreeSpinChecker.StartFreeSpin();
                     reelsState = ReelStateEnum.Ready;
+                    if (isFinalFreeSpin)
+                    {
+                        freeSpinComponent.ShowFreeSpinPopup();
+                        foreach(var reel in reels)
+                        {
+                            isFinalFreeSpin = false;
+                        }
+                    }
                 }
                 PrepareReel(reelT);
+                OnFreeSpin();
             });
     }
 
@@ -164,5 +183,35 @@ public class ReelSpinner : MonoBehaviour
         startBtn.transform.localScale = startBtnScale;
         stopBtn.interactable = stopBtnInteractable;
         stopBtn.transform.localScale = stopBtnScale;
+    }
+
+    private void OnFreeSpin()
+    {
+        if (freeSpinComponent.FreeSpinCount != 0 && reelsState == ReelStateEnum.Ready)
+        {
+            if (freeSpinComponent.FreeSpinCount - 1 == 0)
+            {
+                isFinalFreeSpin = true;
+            }
+            else
+            {
+                isFinalFreeSpin = false;
+            }
+            reelsState = ReelStateEnum.Stop;
+            Invoke(nameof(StartSpin), 0.5f);
+            freeSpinComponent.FreeSpinCount -= 1;
+        }
+    }
+
+    private void StartBtnsState()
+    {
+        if (freeSpinComponent.FreeSpinCount == 0 && !isFinalFreeSpin)
+        {
+            reelsState = ReelStateEnum.Start;
+        }
+        else
+        {
+            reelsState = ReelStateEnum.Stop;
+        }
     }
 }
