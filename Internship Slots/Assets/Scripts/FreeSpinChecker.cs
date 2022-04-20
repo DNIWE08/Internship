@@ -70,6 +70,9 @@ public class FreeSpinChecker : MonoBehaviour
             .DOScale(new Vector3(1,1,1), 0.3f)
             .OnComplete(() =>
             {
+                fsPrize.GetComponent<Transform>()
+                    .DOScale(1.2f, 0.3f)
+                    .SetLoops(8, LoopType.Yoyo);
                 StartCoroutine(CounterCorutine());
             });
     }
