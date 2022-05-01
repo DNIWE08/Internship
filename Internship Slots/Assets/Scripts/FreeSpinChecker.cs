@@ -8,17 +8,16 @@ using System;
 public class FreeSpinChecker : MonoBehaviour
 {
     [SerializeField] Reel[] reels;
-    [SerializeField] GameObject pnl;
     [SerializeField] Text CounterText;
     
-    internal bool isFreeSpin = false;
-
-    private CanvasGroup pnlCG;
-    private int freeSpinCount = 0;
-
+    [SerializeField] GameObject fsPnl;
     [SerializeField] Transform fsPopup;
     [SerializeField] Text fsPrize;
+    [SerializeField] int bonusSpin = 10;
+    private CanvasGroup fsPnlCG;
+    private int freeSpinCount = 0;
     private float totalFreeSpinPrize = 0;
+    internal bool isFreeSpin = false;
 
     internal int FreeSpinCount { get => freeSpinCount; set => freeSpinCount = value; }
     internal float TotalFreeSpinPrize { get => totalFreeSpinPrize; set => totalFreeSpinPrize = value; }
@@ -28,7 +27,7 @@ public class FreeSpinChecker : MonoBehaviour
     private void Start()
     {
         fsPopup.transform.localScale = Vector3.zero;
-        pnlCG = pnl.GetComponent<CanvasGroup>();
+        fsPnlCG = fsPnl.GetComponent<CanvasGroup>();
         CheckFreeSpin += OnFreeSpin;
     }
 
@@ -50,15 +49,18 @@ public class FreeSpinChecker : MonoBehaviour
     {
         if (ScatterOnReels())
         {
+            if(freeSpinCount == 0)
+            {
+                totalFreeSpinPrize = 0;
+            }
             isFreeSpin = true;
-            pnlCG.alpha = 1;
-            freeSpinCount += 10;
-            totalFreeSpinPrize = 0;
+            fsPnlCG.alpha = 1;
+            freeSpinCount += bonusSpin;
         }
         else if (freeSpinCount == 0)
         {
             isFreeSpin = false;
-            pnlCG.alpha = 0;
+            fsPnlCG.alpha = 0;
         }
         CounterText.text = freeSpinCount.ToString();
     }

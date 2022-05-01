@@ -7,13 +7,12 @@ public class Reel : MonoBehaviour
 {
     [SerializeField] private RectTransform mainCanvasRT;
     [SerializeField] private GameConfig gameConfig;
-    [SerializeField] public int reelId;
     [SerializeField] private GameSprite scatterSymbol;
+    [SerializeField] public int reelId;
 
     [SerializeField] private Symbol[] reelSymbols;
     private List<Transform> endReelSymbols;
 
-    private Dictionary<Transform, Symbol> symbolsDictionary;
 
     [SerializeField] private int symbolsOnReel;
     private int finalScreenNumber = 0;
@@ -25,9 +24,9 @@ public class Reel : MonoBehaviour
     private float mainCanvasScale;
     private float symbolHeight;
 
+    private Dictionary<Transform, Symbol> symbolsDictionary;
     internal Symbol[] ReelSymbols { get => reelSymbols; }
     internal List<Transform> EndReelSymbols => endReelSymbols;
-
 
     private void Start()
     {
@@ -132,6 +131,20 @@ public class Reel : MonoBehaviour
         {
             finalScreenNumber = 0;
         }
+    }
+
+    public bool ScatterOnFinalScreen()
+    {
+        var currentFinalScreen = gameConfig.FinalScreens[finalScreenNumber].FinalScreenData;
+        for (var i = 0; i < symbolsOnReel; i++)
+        {
+            var currentSprite = gameConfig.GameSprites[currentFinalScreen[(reelId - 1) * symbolsOnReel + i]];
+            if(currentSprite == scatterSymbol)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void ClearEndReels()

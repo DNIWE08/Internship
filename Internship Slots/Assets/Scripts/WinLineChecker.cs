@@ -8,14 +8,13 @@ using System;
 public class WinLineChecker : MonoBehaviour
 {
     [SerializeField] private GameConfig gameConfig;
-    private FreeSpinChecker freeSpinComponent;
-
     [SerializeField] private Reel[] reels;
+    private FreeSpinChecker freeSpinComponent;
     private WinLineConfig[] winLinesData;
+    private readonly int symbolOnReel = 3;
 
     [SerializeField] private Text counterText;
     private float prize = 0f;
-    private readonly int symbolOnReel = 3;
 
     private Dictionary<Transform, Symbol> symbolsDictionary;
     private Dictionary<Sprite, float> prizeDictionary;
@@ -28,7 +27,6 @@ public class WinLineChecker : MonoBehaviour
         freeSpinComponent = gameObject.GetComponent<FreeSpinChecker>();
 
         prizeDictionary = new Dictionary<Sprite, float>();
-
         for(var i = 0; i < gameConfig.GameSprites.Length; i++)
         {
             var sprite = gameConfig.GameSprites[i];
@@ -89,8 +87,10 @@ public class WinLineChecker : MonoBehaviour
             foreach (var symbol in winSymbols)
             {
                 var symbolParticle = symbolsDictionary[symbol].SymbolParticle;
+                var symbolImage = symbolsDictionary[symbol].SymbolImage;
+
                 symbolParticle.SetActive(true);
-                symbolsDictionary[symbol].SymbolImage.color = Color.white;
+                symbolImage.color = Color.white;
 
                 symbol.DOScale(1.2f, 0.4f)
                     .SetLoops(4, LoopType.Yoyo)
@@ -108,7 +108,11 @@ public class WinLineChecker : MonoBehaviour
         }
     }
 
-    private void FillSymbols(Color color)
+    // func (delegate)
+    // delegate(symbol)
+    // { ??????????? ???????? ??? ???????? }
+    
+    private void FillSymbols(Color color) // ?????????? ????????
     {
         for (var i = 0; i < reels.Length; i++)
         {
@@ -119,7 +123,7 @@ public class WinLineChecker : MonoBehaviour
         }
     }
 
-    private void ResetWinAnimation()
+    private void ResetWinAnimation() //
     {
         DOTween.KillAll();
         for (var i = 0; i < reels.Length; i++)
@@ -143,8 +147,8 @@ public class WinLineChecker : MonoBehaviour
         for(var i = 0; i < symbols.Count; i++)
         {
             var symbol = symbolsDictionary[symbols[i]].SymbolImage.sprite;
-            var currentSrite = prizeDictionary[symbol];
-            prize += currentSrite;
+            var symbolCost = prizeDictionary[symbol];
+            prize += symbolCost;
         }
         return prize / symbolOnReel;
     }
