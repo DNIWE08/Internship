@@ -99,16 +99,14 @@ public class ReelSpinner : MonoBehaviour
             .SetEase(Ease.OutCubic)
             .OnComplete(() =>
             {
-                PrepareReel(reelT);
                 if(reelsDictionary[reelT].reelId == reels.Length)
                 {
                     anticipationParticle.SetActive(false);
                     WinLineChecker.StartCheckAnimation();
                     FreeSpinChecker.StartCheckFreeSpin();
+                    reelsState = ReelStateEnum.Ready;
                     
                     balanceController.ChangeBalance();
-                    reelsState = ReelStateEnum.Ready;
-
                     if (isFinalFreeSpin)
                     {
                         reelsState = ReelStateEnum.Stop;
@@ -116,12 +114,12 @@ public class ReelSpinner : MonoBehaviour
                         balanceController.EndFreeSpin();
                         isFinalFreeSpin = false;
                     }
-                    if (balanceController.BalanceModel.FreeSpinCount != 0)
-                    {
-                        reelsState = ReelStateEnum.Stop;
-                        WatchFreeSpin();
-                        StartCoroutine(FreeSpinCorotuine());
-                    }
+                }
+                PrepareReel(reelT);
+                if (balanceController.BalanceModel.FreeSpinCount != 0 && reelsState == ReelStateEnum.Ready)
+                {
+                    WatchFreeSpin();
+                    StartCoroutine(FreeSpinCorotuine());
                 }
             });
     }
@@ -166,7 +164,7 @@ public class ReelSpinner : MonoBehaviour
         }
         else
         {
-            yield return null;
+            yield return new WaitForSeconds(0.3f);
             StartSpin();
         }
     }
@@ -207,6 +205,7 @@ public class ReelSpinner : MonoBehaviour
         {
             isFinalFreeSpin = false;
         }
+        reelsState = ReelStateEnum.Stop;
         balanceController.BalanceModel.FreeSpinCount -= 1;
     }
 
