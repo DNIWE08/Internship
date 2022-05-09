@@ -421,6 +421,7 @@ GameObject:
   - component: {fileID: 340821431}
   - component: {fileID: 340821430}
   - component: {fileID: 340821429}
+  - component: {fileID: 340821432}
   m_Layer: 5
   m_Name: Free_Spin_Counter
   m_TagString: Untagged
@@ -489,6 +490,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 18.3}
   m_SizeDelta: {x: 300, y: 45}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &340821432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 340821428}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7223ed791e3773f4b88ab7de11b513ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  counterText: {fileID: 340821429}
 --- !u!224 &343716762 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6574635293866610427, guid: 9dba156e5beec08458baa1537ba4a85d, type: 3}
@@ -690,8 +704,9 @@ GameObject:
   - component: {fileID: 622732483}
   - component: {fileID: 622732485}
   - component: {fileID: 622732484}
+  - component: {fileID: 622732486}
   m_Layer: 5
-  m_Name: Counter
+  m_Name: Prize_Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -758,6 +773,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 622732482}
   m_CullTransparentMesh: 1
+--- !u!114 &622732486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 622732482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7223ed791e3773f4b88ab7de11b513ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  counterText: {fileID: 622732484}
 --- !u!1 &685422887
 GameObject:
   m_ObjectHideFlags: 0
@@ -6312,14 +6340,14 @@ MonoBehaviour:
     m_FontStyle: 0
     m_BestFit: 1
     m_MinSize: 10
-    m_MaxSize: 48
-    m_Alignment: 1
+    m_MaxSize: 36
+    m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: x
+  m_Text: "\u0417\u0430\u0431\u0440\u0430\u0442\u044C"
 --- !u!222 &1114370116
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6510,7 +6538,7 @@ GameObject:
   - component: {fileID: 1449449344}
   - component: {fileID: 1449449343}
   m_Layer: 5
-  m_Name: Counter_Heading
+  m_Name: Prize_Heading
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6894,9 +6922,11 @@ MonoBehaviour:
   spinCount: 5
   symbolsOnReel: 3
   spinDuration: 1
+  winLineDuration: 1.3
   startBtn: {fileID: 273089496}
   stopBtn: {fileID: 1924920968}
   anticipationParticle: {fileID: 928251947}
+  balanceController: {fileID: 1910341690}
 --- !u!4 &1890200476
 Transform:
   m_ObjectHideFlags: 0
@@ -6928,7 +6958,7 @@ MonoBehaviour:
   - {fileID: 868282583}
   - {fileID: 1853078623}
   - {fileID: 2041341120}
-  counterText: {fileID: 622732484}
+  balanceController: {fileID: 1910341690}
 --- !u!114 &1890200478
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6945,11 +6975,85 @@ MonoBehaviour:
   - {fileID: 868282583}
   - {fileID: 1853078623}
   - {fileID: 2041341120}
-  CounterText: {fileID: 340821429}
-  fsPnl: {fileID: 1338088006}
+  balanceController: {fileID: 1910341690}
+  reelSpinner: {fileID: 1890200475}
   fsPopup: {fileID: 788071748}
   fsPrize: {fileID: 739212007}
   bonusSpin: 10
+--- !u!1 &1910341687
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1910341691}
+  - component: {fileID: 1910341690}
+  - component: {fileID: 1910341689}
+  - component: {fileID: 1910341688}
+  m_Layer: 0
+  m_Name: Game_Balance
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1910341688
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1910341687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0b02e2392649184ebfc09fb4673ae69, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prizeCounter: {fileID: 622732486}
+  freeSpinCounter: {fileID: 340821432}
+  fsPnlCG: {fileID: 1338088008}
+--- !u!114 &1910341689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1910341687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0450e117de736be4d8f881d7e46ebb6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1910341690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1910341687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d78259d96a5f2b47b0f219565e57e2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  balanceModel: {fileID: 1910341689}
+  balanceView: {fileID: 1910341688}
+--- !u!4 &1910341691
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1910341687}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 474.44238, y: 205.4101, z: -19.585407}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1924920967
 GameObject:
   m_ObjectHideFlags: 0
@@ -12188,7 +12292,7 @@ GameObject:
   - component: {fileID: 2069966143}
   - component: {fileID: 2069966142}
   m_Layer: 5
-  m_Name: Close_Btn
+  m_Name: Get_Prize_Btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -12209,10 +12313,10 @@ RectTransform:
   m_Father: {fileID: 1803974285}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -50, y: -50}
-  m_SizeDelta: {x: 45, y: 30}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 95}
+  m_SizeDelta: {x: 150, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2069966142
 MonoBehaviour:
@@ -12283,7 +12387,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 0.16078432, g: 0.5372549, b: 0.10980392, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

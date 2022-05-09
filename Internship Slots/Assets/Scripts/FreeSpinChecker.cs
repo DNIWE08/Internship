@@ -8,26 +8,18 @@ using System;
 public class FreeSpinChecker : MonoBehaviour
 {
     [SerializeField] Reel[] reels;
-    [SerializeField] Text CounterText;
+    [SerializeField] BalanceController balanceController;
+    [SerializeField] ReelSpinner reelSpinner;
     
-    [SerializeField] GameObject fsPnl;
     [SerializeField] Transform fsPopup;
     [SerializeField] Text fsPrize;
     [SerializeField] int bonusSpin = 10;
-    private CanvasGroup fsPnlCG;
-    private int freeSpinCount = 0;
-    private float totalFreeSpinPrize = 0;
-    internal bool isFreeSpin = false;
-
-    internal int FreeSpinCount { get => freeSpinCount; set => freeSpinCount = value; }
-    internal float TotalFreeSpinPrize { get => totalFreeSpinPrize; set => totalFreeSpinPrize = value; }
 
     public static event Action CheckFreeSpin;
 
     private void Start()
     {
         fsPopup.transform.localScale = Vector3.zero;
-        fsPnlCG = fsPnl.GetComponent<CanvasGroup>();
         CheckFreeSpin += OnFreeSpin;
     }
 
@@ -40,7 +32,7 @@ public class FreeSpinChecker : MonoBehaviour
         return false;
     }
 
-    public static void StartFreeSpin()
+    public static void StartCheckFreeSpin()
     {
         CheckFreeSpin?.Invoke();
     }
@@ -49,20 +41,13 @@ public class FreeSpinChecker : MonoBehaviour
     {
         if (ScatterOnReels())
         {
-            if(freeSpinCount == 0)
+            if(balanceController.BalanceModel.FreeSpinCount == 0)
             {
-                totalFreeSpinPrize = 0;
+                balanceController.StartFreeSpin();
             }
-            isFreeSpin = true;
-            fsPnlCG.alpha = 1;
-            freeSpinCount += bonusSpin;
+            balanceController.UpdateFreeSpin(bonusSpin);
         }
-        else if (freeSpinCount == 0)
-        {
-            isFreeSpin = false;
-            fsPnlCG.alpha = 0;
-        }
-        CounterText.text = freeSpinCount.ToString();
+        balanceController.UpdateFreeSpinCount();
     }
 
     internal void ShowFreeSpinPopup()
@@ -75,21 +60,13 @@ public class FreeSpinChecker : MonoBehaviour
                 fsPrize.GetComponent<Transform>()
                     .DOScale(1.2f, 0.3f)
                     .SetLoops(8, LoopType.Yoyo);
-                StartCoroutine(CounterCorutine());
+                StartCoroutine(Utils.CounterCoroutine(fsPrize, 0, balanceController.BalanceModel.TotalFreeSpinPrize));
             });
     }
 
     public void ClosePopup()
     {
         fsPopup.DOScale(new Vector3(0, 0, 0), 0.3f);
-    }
-
-    private IEnumerator CounterCorutine()
-    {
-        for (var i = 0; i <= totalFreeSpinPrize; i++)
-        {
-            fsPrize.text = i.ToString();
-            yield return new WaitForSeconds(0.005f);
-        }
+        reelSpinner.ReelsState = ReelStateEnum.Ready;
     }
 }
