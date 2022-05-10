@@ -55,14 +55,13 @@ public class ReelSpinner : MonoBehaviour
     public void StartSpin()
     {
         WinLineChecker.ForceSpinStart();
-
         StartState();
-        
         for (int i = 0; i < reels.Length; i++)
         {
             var currentReel = reels[i];
             currentReel.isFinalSpin = false;
             currentReel.ResetScatter();
+            ReelStopped(currentReel, false);
 
             var reelT = currentReel.transform;
             reelT.DOLocalMoveY(spinIteration, 0.6f)
@@ -99,7 +98,8 @@ public class ReelSpinner : MonoBehaviour
             .SetEase(Ease.OutCubic)
             .OnComplete(() =>
             {
-                if(reelsDictionary[reelT].reelId == reels.Length)
+                PrepareReel(reelT);
+                if (reelsDictionary[reelT].reelId == reels.Length)
                 {
                     anticipationParticle.SetActive(false);
                     WinLineChecker.StartCheckAnimation();
@@ -107,6 +107,7 @@ public class ReelSpinner : MonoBehaviour
                     reelsState = ReelStateEnum.Ready;
                     
                     balanceController.ChangeBalance();
+
                     if (isFinalFreeSpin)
                     {
                         reelsState = ReelStateEnum.Stop;
@@ -115,7 +116,6 @@ public class ReelSpinner : MonoBehaviour
                         isFinalFreeSpin = false;
                     }
                 }
-                PrepareReel(reelT);
                 if (balanceController.BalanceModel.FreeSpinCount != 0 && reelsState == ReelStateEnum.Ready)
                 {
                     WatchFreeSpin();
@@ -164,7 +164,10 @@ public class ReelSpinner : MonoBehaviour
         }
         else
         {
-            yield return new WaitForSeconds(0.3f);
+            while (AllReelsStopped() == false)
+            {
+                yield return null;
+            }
             StartSpin();
         }
     }
@@ -192,7 +195,35 @@ public class ReelSpinner : MonoBehaviour
         var prevReelPosY = reelT.localPosition.y;
         var traveledReelDistance = -prevReelPosY;
         reelT.localPosition = new Vector3(reelT.localPosition.x, 0);
-        reelsDictionary[reelT].ResetPosition(traveledReelDistance);
+        var currentReel = reelsDictionary[reelT];
+        currentReel.ResetPosition(traveledReelDistance);
+        ReelStopped(currentReel, true);
+    }
+
+    private void ReelStopped(Reel reel, bool isStopped)
+    {
+        if(isStopped)
+        {
+            reel.reelStopped = true;
+        } 
+        else
+        {
+            reel.reelStopped = false;
+        }
+    }
+
+    private bool AllReelsStopped()
+    {
+        if (reels[0].reelStopped &&
+            reels[1].reelStopped &&
+            reels[2].reelStopped)
+        {
+            return true;
+        }
+        else 
+        { 
+            return false; 
+        }
     }
 
     private void WatchFreeSpin()

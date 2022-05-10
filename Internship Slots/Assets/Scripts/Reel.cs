@@ -19,13 +19,14 @@ public class Reel : MonoBehaviour
     private int currentFinalSymbol = 0;
     internal bool isFinalSpin = false;
     internal bool hasScatter = false;
+    internal bool reelStopped = true;
 
     [SerializeField] private float endPosition;
     private float mainCanvasScale;
     private float symbolHeight;
 
     private Dictionary<Transform, Symbol> symbolsDictionary;
-    internal Symbol[] ReelSymbols { get => reelSymbols; }
+    internal Symbol[] ReelSymbols => reelSymbols;
     internal List<Transform> EndReelSymbols => endReelSymbols;
 
     private void Start()
