@@ -8,13 +8,11 @@ using System;
 public class WinLineChecker : MonoBehaviour
 {
     [SerializeField] private GameConfig gameConfig;
-
     [SerializeField] private Reel[] reels;
     private WinLineConfig[] winLinesData;
-
-    [SerializeField] private Text counterText;
-    private float prize = 0f;
     private readonly int symbolOnReel = 3;
+
+    [SerializeField] BalanceController balanceController;
 
     private Dictionary<Transform, Symbol> symbolsDictionary;
     private Dictionary<Sprite, float> prizeDictionary;
@@ -25,15 +23,14 @@ public class WinLineChecker : MonoBehaviour
     private void Start()
     {
         prizeDictionary = new Dictionary<Sprite, float>();
-
-        for(var i = 0; i < gameConfig.GameSprites.Length; i++)
+        for (var i = 0; i < gameConfig.GameSprites.Length; i++)
         {
             var sprite = gameConfig.GameSprites[i];
             prizeDictionary.Add(sprite.SpriteImage, sprite.SpriteCost);
         }
 
         symbolsDictionary = new Dictionary<Transform, Symbol>();
-        for(var i = 0; i < reels.Length; i++)
+        for (var i = 0; i < reels.Length; i++)
         {
             foreach (var reelSymbol in reels[i].ReelSymbols)
             {
@@ -52,14 +49,14 @@ public class WinLineChecker : MonoBehaviour
         Transform[] checkWinLine = new Transform[3];
         foreach (var line in winLinesData)
         {
-            for(var i = 0; i < line.WinLine.Length; i++)
+            for (var i = 0; i < line.WinLine.Length; i++)
             {
                 var currentReelSymbol = reels[i].EndReelSymbols[line.WinLine[i] - 1];
                 checkWinLine[i] = currentReelSymbol;
             }
-            if(symbolsDictionary[checkWinLine[0]].SymbolImage.sprite.name ==
+            if (symbolsDictionary[checkWinLine[0]].SymbolImage.sprite.name ==
                 symbolsDictionary[checkWinLine[1]].SymbolImage.sprite.name &&
-                symbolsDictionary[checkWinLine[1]].SymbolImage.sprite.name == 
+                symbolsDictionary[checkWinLine[1]].SymbolImage.sprite.name ==
                 symbolsDictionary[checkWinLine[2]].SymbolImage.sprite.name)
             {
                 winItems.Add(checkWinLine[0]);
@@ -73,34 +70,40 @@ public class WinLineChecker : MonoBehaviour
     public void WinLinesAnimation()
     {
         var winSymbols = CheckWinLines();
-        if(winSymbols.Count > 0)
+        if (winSymbols.Count > 0)
         {
-            prize = GetWinPrize(winSymbols);
-            StartCoroutine(CounterCorutine());
+            var prize = GetWinPrize(winSymbols);
+            balanceController.GetSpinPrize((int)prize);
             FillSymbols(Color.grey);
-
-            foreach (var symbol in winSymbols)
-            {
-                var symbolParticle = symbolsDictionary[symbol].SymbolParticle;
-                symbolParticle.SetActive(true);
-                symbolsDictionary[symbol].SymbolImage.color = Color.white;
-
-                symbol.DOScale(1.2f, 0.4f)
-                    .SetLoops(4, LoopType.Yoyo)
-                    .OnComplete(() =>
-                    {
-                        FillSymbols(Color.white);
-                        symbolParticle.SetActive(false);
-                    });
-            }
+            AnimateSymbols(winSymbols);
         }
 
-        foreach(var reel in reels)
+        foreach (var reel in reels)
         {
             reel.ClearEndReels();
         }
     }
 
+    private void AnimateSymbols(List<Transform> winSymbols)
+    {
+        foreach (var symbol in winSymbols)
+        {
+            var symbolParticle = symbolsDictionary[symbol].SymbolParticle;
+            var symbolImage = symbolsDictionary[symbol].SymbolImage;
+
+            symbolParticle.SetActive(true);
+            symbolImage.color = Color.white;
+
+            symbol.DOScale(1.2f, 0.4f)
+                .SetLoops(4, LoopType.Yoyo)
+                .OnComplete(() =>
+                {
+                    FillSymbols(Color.white);
+                    symbolParticle.SetActive(false);
+                });
+        }
+    }
+    
     private void FillSymbols(Color color)
     {
         for (var i = 0; i < reels.Length; i++)
@@ -126,8 +129,8 @@ public class WinLineChecker : MonoBehaviour
                 reelSymbol.transform.localScale = Vector3.one;
             }
         }
-        prize = 0f;
-        counterText.text = prize.ToString();
+        balanceController.StopCoroutine();
+        balanceController.PrepareCounter();
     }
 
     private float GetWinPrize(List<Transform> symbols)
@@ -136,8 +139,8 @@ public class WinLineChecker : MonoBehaviour
         for(var i = 0; i < symbols.Count; i++)
         {
             var symbol = symbolsDictionary[symbols[i]].SymbolImage.sprite;
-            var currentSrite = prizeDictionary[symbol];
-            prize += currentSrite;
+            var symbolCost = prizeDictionary[symbol];
+            prize += symbolCost;
         }
         return prize / symbolOnReel;
     }
@@ -150,15 +153,5 @@ public class WinLineChecker : MonoBehaviour
     public static void ForceSpinStart()
     {
         OnForceSpinStart?.Invoke();
-    }
-
-    private IEnumerator CounterCorutine()
-    {
-        for(var i = 0; i <= prize; i++)
-        {
-            counterText.text = i.ToString();
-            //yield return null;
-            yield return new WaitForSeconds(0.005f);
-        }
     }
 }

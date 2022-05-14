@@ -8,23 +8,32 @@ public class ReelSpinner : MonoBehaviour
 {
     [SerializeField] private Reel[] reels;
     [SerializeField] private int spinCount;
-    [SerializeField] private float spinDuration = 1;
     [SerializeField] private int symbolsOnReel;
+    [SerializeField] private float spinDuration = 1;
+    [SerializeField] private float winLineDuration = 1.2f;
 
     [SerializeField] public Button startBtn;
     [SerializeField] public Button stopBtn;
 
+    [SerializeField] private GameObject anticipationParticle;
+
+    [SerializeField] private BalanceController balanceController;
+
     private float spinIteration;
     private float symbolHeight;
 
-    private Dictionary<Transform, Reel> reelsDictionary;
+    private FreeSpinChecker freeSpinComponent;
+    private bool isFinalFreeSpin = false;
 
+    private Dictionary<Transform, Reel> reelsDictionary;
     private ReelStateEnum reelsState = ReelStateEnum.Ready;
     internal ReelStateEnum ReelsState { get => reelsState; set => reelsState = value; }
 
 
     private void Start()
     {
+        freeSpinComponent = gameObject.GetComponent<FreeSpinChecker>();
+
         symbolHeight = reels[1].ReelSymbols[1].GetComponent<RectTransform>().rect.height;
 
         spinIteration = -symbolHeight * reels[1].ReelSymbols.Length;
@@ -45,17 +54,19 @@ public class ReelSpinner : MonoBehaviour
 
     public void StartSpin()
     {
-        reelsState = ReelStateEnum.Start;
         WinLineChecker.ForceSpinStart();
+        StartState();
         for (int i = 0; i < reels.Length; i++)
         {
             var currentReel = reels[i];
             currentReel.isFinalSpin = false;
+            currentReel.ResetScatter();
+            ReelStopped(currentReel, false);
 
             var reelT = currentReel.transform;
             reelT.DOLocalMoveY(spinIteration, 0.6f)
             .SetEase(Ease.InCubic)
-            .SetDelay(i * 0.2f)
+            .SetDelay(i * 0.3f)
             .OnComplete(() =>
             {
                 if (i == reels.Length)
@@ -63,8 +74,7 @@ public class ReelSpinner : MonoBehaviour
                     reelsState = ReelStateEnum.Spin;
                 }
                 MiddleSpin(reelT);
-            }
-            );
+            });
         }
     }
 
@@ -81,18 +91,36 @@ public class ReelSpinner : MonoBehaviour
     public void ScrollStop(Transform reelT)
     {
         DOTween.Kill(reelT);
+        reelsDictionary[reelT].isFinalSpin = true;
         var currentReelPosY = reelT.localPosition.y;
         var stoppingDistance = currentReelPosY - symbolHeight * symbolsOnReel;
         reelT.DOLocalMoveY(stoppingDistance, 1f)
             .SetEase(Ease.OutCubic)
             .OnComplete(() =>
             {
-                if(reelsDictionary[reelT].reelId == reels.Length)
-                {
-                    WinLineChecker.StartCheckAnimation();
-                    reelsState = ReelStateEnum.Ready;
-                }
                 PrepareReel(reelT);
+                if (reelsDictionary[reelT].reelId == reels.Length)
+                {
+                    anticipationParticle.SetActive(false);
+                    WinLineChecker.StartCheckAnimation();
+                    FreeSpinChecker.StartCheckFreeSpin();
+                    reelsState = ReelStateEnum.Ready;
+                    
+                    balanceController.ChangeBalance();
+
+                    if (isFinalFreeSpin)
+                    {
+                        reelsState = ReelStateEnum.Stop;
+                        freeSpinComponent.ShowFreeSpinPopup();
+                        balanceController.EndFreeSpin();
+                        isFinalFreeSpin = false;
+                    }
+                }
+                if (balanceController.BalanceModel.FreeSpinCount != 0 && reelsState == ReelStateEnum.Ready)
+                {
+                    WatchFreeSpin();
+                    StartCoroutine(FreeSpinCorotuine());
+                }
             });
     }
 
@@ -107,10 +135,41 @@ public class ReelSpinner : MonoBehaviour
         reelT.DOLocalMoveY(correctionDistance, correctionDuration)
             .SetEase(Ease.Linear)
             .OnComplete(() => {
-                ScrollStop(reelT);
                 reelsState = ReelStateEnum.Stop;
-                reelsDictionary[reelT].isFinalSpin = true;
+                if (reelsDictionary[reelT].reelId == reels.Length && PreviewScatter())
+                {
+                    anticipationParticle.SetActive(true);
+                    var extraSpinDistance = reelT.localPosition.y + spinIteration * 15;
+                    var extraSpinDuration = extraSpinDistance / spinIteration / 4f;
+                    reelT.DOLocalMoveY(extraSpinDistance, extraSpinDuration)
+                        .SetEase(Ease.Linear)
+                        .OnComplete(() =>
+                        {
+                            ScrollStop(reelT);
+                        });
+                } 
+                else
+                {
+                    ScrollStop(reelT);
+                }
             });
+    }
+
+    private IEnumerator FreeSpinCorotuine()
+    {
+        if (balanceController.BalanceModel.CurrentPrize > 0)
+        {
+            yield return new WaitForSeconds(winLineDuration);
+            StartSpin();
+        }
+        else
+        {
+            while (AllReelsStopped() == false)
+            {
+                yield return null;
+            }
+            StartSpin();
+        }
     }
 
     public void ForceStopReels()
@@ -136,7 +195,72 @@ public class ReelSpinner : MonoBehaviour
         var prevReelPosY = reelT.localPosition.y;
         var traveledReelDistance = -prevReelPosY;
         reelT.localPosition = new Vector3(reelT.localPosition.x, 0);
-        reelsDictionary[reelT].ResetPosition(traveledReelDistance);
+        var currentReel = reelsDictionary[reelT];
+        currentReel.ResetPosition(traveledReelDistance);
+        ReelStopped(currentReel, true);
+    }
+
+    private void ReelStopped(Reel reel, bool isStopped)
+    {
+        if(isStopped)
+        {
+            reel.reelStopped = true;
+        } 
+        else
+        {
+            reel.reelStopped = false;
+        }
+    }
+
+    private bool AllReelsStopped()
+    {
+        if (reels[0].reelStopped &&
+            reels[1].reelStopped &&
+            reels[2].reelStopped)
+        {
+            return true;
+        }
+        else 
+        { 
+            return false; 
+        }
+    }
+
+    private void WatchFreeSpin()
+    {
+        if (balanceController.BalanceModel.FreeSpinCount - 1 == 0)
+        {
+            isFinalFreeSpin = true;
+        }
+        else
+        {
+            isFinalFreeSpin = false;
+        }
+        reelsState = ReelStateEnum.Stop;
+        balanceController.BalanceModel.FreeSpinCount -= 1;
+    }
+
+    private bool PreviewScatter()
+    {
+        var firstReel = reels[0].ScatterOnFinalScreen();
+        var secondReel = reels[1].ScatterOnFinalScreen();
+        if (firstReel && secondReel)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private void StartState()
+    {
+        if (balanceController.BalanceModel.FreeSpinCount == 0 && !isFinalFreeSpin)
+        {
+            reelsState = ReelStateEnum.Start;
+        }
+        else
+        {
+            reelsState = ReelStateEnum.Stop;
+        }
     }
 
     private void CheckButtonState()

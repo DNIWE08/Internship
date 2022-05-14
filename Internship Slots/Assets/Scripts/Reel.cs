@@ -7,25 +7,27 @@ public class Reel : MonoBehaviour
 {
     [SerializeField] private RectTransform mainCanvasRT;
     [SerializeField] private GameConfig gameConfig;
+    [SerializeField] private GameSprite scatterSymbol;
     [SerializeField] public int reelId;
 
     [SerializeField] private Symbol[] reelSymbols;
     private List<Transform> endReelSymbols;
 
-    private Dictionary<Transform, Symbol> symbolsDictionary;
 
     [SerializeField] private int symbolsOnReel;
     private int finalScreenNumber = 0;
     private int currentFinalSymbol = 0;
     internal bool isFinalSpin = false;
+    internal bool hasScatter = false;
+    internal bool reelStopped = true;
 
     [SerializeField] private float endPosition;
     private float mainCanvasScale;
     private float symbolHeight;
 
-    internal Symbol[] ReelSymbols { get => reelSymbols; }
+    private Dictionary<Transform, Symbol> symbolsDictionary;
+    internal Symbol[] ReelSymbols => reelSymbols;
     internal List<Transform> EndReelSymbols => endReelSymbols;
-
 
     private void Start()
     {
@@ -70,10 +72,15 @@ public class Reel : MonoBehaviour
     {
         if (isFinalSpin)
         {
-            symbolsDictionary[reelT].SymbolImage.sprite = GetFinalSprite();
+            var symbol = symbolsDictionary[reelT];
+            symbol.SymbolImage.sprite = GetFinalSprite();
             if (endReelSymbols.Count < symbolsOnReel)
             {
                 endReelSymbols.Add(reelT);
+            }
+            if(symbol.SymbolImage.sprite == scatterSymbol.SpriteImage)
+            {
+                hasScatter = true;
             }
         }
         else
@@ -127,8 +134,27 @@ public class Reel : MonoBehaviour
         }
     }
 
+    public bool ScatterOnFinalScreen()
+    {
+        var currentFinalScreen = gameConfig.FinalScreens[finalScreenNumber].FinalScreenData;
+        for (var i = 0; i < symbolsOnReel; i++)
+        {
+            var currentSprite = gameConfig.GameSprites[currentFinalScreen[(reelId - 1) * symbolsOnReel + i]];
+            if(currentSprite == scatterSymbol)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void ClearEndReels()
     {
         endReelSymbols.Clear();
+    }
+
+    public void ResetScatter()
+    {
+        hasScatter = false;
     }
 }

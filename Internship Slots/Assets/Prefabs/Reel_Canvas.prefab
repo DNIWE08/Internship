@@ -245,6 +245,7 @@ MonoBehaviour:
   mainCanvasRT: {fileID: 0}
   gameConfig: {fileID: 11400000, guid: d588b44c696984a43bbaab37b39066e1, type: 2}
   reelId: 3
+  scatterSymbol: {fileID: 11400000, guid: 50ab906209ae2a34384ab9d350786f20, type: 2}
   reelSymbols:
   - {fileID: 1492604186911735780}
   - {fileID: 8414486072446599742}
