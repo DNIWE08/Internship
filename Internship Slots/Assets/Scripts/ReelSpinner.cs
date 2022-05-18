@@ -19,6 +19,8 @@ public class ReelSpinner : MonoBehaviour
 
     [SerializeField] private BalanceController balanceController;
 
+    [SerializeField] private AudioController audioController;
+
     private float spinIteration;
     private float symbolHeight;
 
@@ -54,6 +56,7 @@ public class ReelSpinner : MonoBehaviour
 
     public void StartSpin()
     {
+        audioController.PlayLoopAudio(AudioType.SFX_ReelsScroll);
         WinLineChecker.ForceSpinStart();
         StartState();
         for (int i = 0; i < reels.Length; i++)
@@ -66,7 +69,7 @@ public class ReelSpinner : MonoBehaviour
             var reelT = currentReel.transform;
             reelT.DOLocalMoveY(spinIteration, 0.6f)
             .SetEase(Ease.InCubic)
-            .SetDelay(i * 0.3f)
+            .SetDelay(i * 0.2f)
             .OnComplete(() =>
             {
                 if (i == reels.Length)
@@ -98,10 +101,16 @@ public class ReelSpinner : MonoBehaviour
             .SetEase(Ease.OutCubic)
             .OnComplete(() =>
             {
+                audioController.PlayAudio(AudioType.SFX_ReelsStop);
+                if(reelsDictionary[reelT].hasScatter == true)
+                {
+                    audioController.PlayAudio(AudioType.SFX_Scatter);
+                }
                 PrepareReel(reelT);
                 if (reelsDictionary[reelT].reelId == reels.Length)
                 {
                     anticipationParticle.SetActive(false);
+                    audioController.StopAudio(AudioType.SFX_Anticipation);
                     WinLineChecker.StartCheckAnimation();
                     FreeSpinChecker.StartCheckFreeSpin();
                     reelsState = ReelStateEnum.Ready;
@@ -139,6 +148,7 @@ public class ReelSpinner : MonoBehaviour
                 if (reelsDictionary[reelT].reelId == reels.Length && PreviewScatter())
                 {
                     anticipationParticle.SetActive(true);
+                    audioController.PlayLoopAudio(AudioType.SFX_Anticipation);
                     var extraSpinDistance = reelT.localPosition.y + spinIteration * 15;
                     var extraSpinDuration = extraSpinDistance / spinIteration / 4f;
                     reelT.DOLocalMoveY(extraSpinDistance, extraSpinDuration)

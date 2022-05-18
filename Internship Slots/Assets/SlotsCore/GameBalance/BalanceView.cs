@@ -8,6 +8,7 @@ public class BalanceView : MonoBehaviour
     [SerializeField] private Counter prizeCounter;
     [SerializeField] private Counter freeSpinCounter;
     [SerializeField] CanvasGroup fsPnlCG;
+    [SerializeField] private AudioController audioController;
 
     public void ChangeValue(int nextValue)
     {
@@ -38,15 +39,14 @@ public class BalanceView : MonoBehaviour
     {
         for (var i = startValue; i <= endValue; i++)
         {
+            var delay = 0.02f;
             counterText.text = i.ToString();
             if (endValue - startValue > 50f)
             {
-                yield return new WaitForSeconds(0.005f);
+                delay = 0.005f;
             }
-            else
-            {
-                yield return new WaitForSeconds(0.02f);
-            }
+            audioController.PlayAudio(AudioType.SFX_Counter);
+            yield return new WaitForSeconds(delay);
         }
     }
 

@@ -6,6 +6,7 @@ public class BalanceController : MonoBehaviour
 {
     [SerializeField] private BalanceModel balanceModel;
     [SerializeField] private BalanceView balanceView;
+    [SerializeField] private AudioController audioController;
 
     public BalanceModel BalanceModel { get => balanceModel; }
     public BalanceView BalanceView { get => balanceView; }
@@ -56,6 +57,7 @@ public class BalanceController : MonoBehaviour
         balanceModel.TotalFreeSpinPrize = 0;
         balanceModel.IsFreeSpin = true;
         balanceView.ToggleFreeSpinPanel(balanceModel.IsFreeSpin);
+        audioController.PlayAudio(AudioType.BG_02);
     }
 
     public void UpdateFreeSpin(int bonusSpin)
@@ -69,6 +71,7 @@ public class BalanceController : MonoBehaviour
     {
         balanceModel.IsFreeSpin = false;
         balanceView.ToggleFreeSpinPanel(balanceModel.IsFreeSpin);
+        audioController.PlayAudio(AudioType.BG_01);
     }
 
     public void StopCoroutine()

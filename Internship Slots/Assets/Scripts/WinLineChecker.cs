@@ -14,6 +14,8 @@ public class WinLineChecker : MonoBehaviour
 
     [SerializeField] BalanceController balanceController;
 
+    [SerializeField] AudioController audioController;
+
     private Dictionary<Transform, Symbol> symbolsDictionary;
     private Dictionary<Sprite, float> prizeDictionary;
 
@@ -72,6 +74,7 @@ public class WinLineChecker : MonoBehaviour
         var winSymbols = CheckWinLines();
         if (winSymbols.Count > 0)
         {
+            audioController.PlayAudio(AudioType.SFX_Prize);
             var prize = GetWinPrize(winSymbols);
             balanceController.GetSpinPrize((int)prize);
             FillSymbols(Color.grey);
