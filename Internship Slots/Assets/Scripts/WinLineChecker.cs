@@ -20,7 +20,7 @@ public class WinLineChecker : MonoBehaviour
     private Dictionary<Sprite, float> prizeDictionary;
 
     public static event Action OnReelsStop;
-    public static event Action OnForceSpinStart;
+    //public static event Action OnForceSpinStart;
 
     private void Start()
     {
@@ -42,7 +42,9 @@ public class WinLineChecker : MonoBehaviour
 
         winLinesData = gameConfig.WinLines;
         OnReelsStop += WinLinesAnimation;
-        OnForceSpinStart += ResetWinAnimation;
+        //OnForceSpinStart += ResetWinAnimation;
+
+        ReelSpinner.OnReelsStart += ResetWinAnimation;
     }
 
     public List<Transform> CheckWinLines()
@@ -153,8 +155,8 @@ public class WinLineChecker : MonoBehaviour
         OnReelsStop?.Invoke();
     }
 
-    public static void ForceSpinStart()
-    {
-        OnForceSpinStart?.Invoke();
-    }
+    //public static void ForceSpinStart()
+    //{
+    //    OnForceSpinStart?.Invoke();
+    //}
 }

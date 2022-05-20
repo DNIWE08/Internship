@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using System;
 
 public class ReelSpinner : MonoBehaviour
 {
@@ -27,6 +28,8 @@ public class ReelSpinner : MonoBehaviour
     private FreeSpinChecker freeSpinComponent;
     private bool isFinalFreeSpin = false;
 
+    public static event Action OnReelsStart;
+
     private Dictionary<Transform, Reel> reelsDictionary;
     private ReelStateEnum reelsState = ReelStateEnum.Ready;
     internal ReelStateEnum ReelsState { get => reelsState; set => reelsState = value; }
@@ -47,6 +50,8 @@ public class ReelSpinner : MonoBehaviour
             var reelT = reels[i].transform;
             reelsDictionary.Add(reelT, reels[i]);
         }
+        OnReelsStart += StartState;
+        //WinLineChecker.OnForceSpinStart += StartState;
     }
 
     private void Update()
@@ -57,8 +62,9 @@ public class ReelSpinner : MonoBehaviour
     public void StartSpin()
     {
         audioController.PlayLoopAudio(AudioType.SFX_ReelsScroll);
-        WinLineChecker.ForceSpinStart();
-        StartState();
+        //WinLineChecker.ForceSpinStart();
+        //StartState();
+        OnReelsStart?.Invoke();
         for (int i = 0; i < reels.Length; i++)
         {
             var currentReel = reels[i];
