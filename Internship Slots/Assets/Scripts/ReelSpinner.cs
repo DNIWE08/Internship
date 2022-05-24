@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using System;
 
 public class ReelSpinner : MonoBehaviour
 {
@@ -19,11 +20,15 @@ public class ReelSpinner : MonoBehaviour
 
     [SerializeField] private BalanceController balanceController;
 
+    [SerializeField] private AudioController audioController;
+
     private float spinIteration;
     private float symbolHeight;
 
     private FreeSpinChecker freeSpinComponent;
     private bool isFinalFreeSpin = false;
+
+    public static event Action OnReelsStart;
 
     private Dictionary<Transform, Reel> reelsDictionary;
     private ReelStateEnum reelsState = ReelStateEnum.Ready;
@@ -45,6 +50,8 @@ public class ReelSpinner : MonoBehaviour
             var reelT = reels[i].transform;
             reelsDictionary.Add(reelT, reels[i]);
         }
+        OnReelsStart += StartState;
+        //WinLineChecker.OnForceSpinStart += StartState;
     }
 
     private void Update()
@@ -54,8 +61,10 @@ public class ReelSpinner : MonoBehaviour
 
     public void StartSpin()
     {
-        WinLineChecker.ForceSpinStart();
-        StartState();
+        audioController.PlayLoopAudio(AudioType.SFX_ReelsScroll);
+        //WinLineChecker.ForceSpinStart();
+        //StartState();
+        OnReelsStart?.Invoke();
         for (int i = 0; i < reels.Length; i++)
         {
             var currentReel = reels[i];
@@ -66,7 +75,7 @@ public class ReelSpinner : MonoBehaviour
             var reelT = currentReel.transform;
             reelT.DOLocalMoveY(spinIteration, 0.6f)
             .SetEase(Ease.InCubic)
-            .SetDelay(i * 0.3f)
+            .SetDelay(i * 0.2f)
             .OnComplete(() =>
             {
                 if (i == reels.Length)
@@ -98,10 +107,16 @@ public class ReelSpinner : MonoBehaviour
             .SetEase(Ease.OutCubic)
             .OnComplete(() =>
             {
+                audioController.PlayAudio(AudioType.SFX_ReelsStop);
+                if(reelsDictionary[reelT].hasScatter == true)
+                {
+                    audioController.PlayAudio(AudioType.SFX_Scatter);
+                }
                 PrepareReel(reelT);
                 if (reelsDictionary[reelT].reelId == reels.Length)
                 {
                     anticipationParticle.SetActive(false);
+                    audioController.StopAudio(AudioType.SFX_Anticipation);
                     WinLineChecker.StartCheckAnimation();
                     FreeSpinChecker.StartCheckFreeSpin();
                     reelsState = ReelStateEnum.Ready;
@@ -139,6 +154,7 @@ public class ReelSpinner : MonoBehaviour
                 if (reelsDictionary[reelT].reelId == reels.Length && PreviewScatter())
                 {
                     anticipationParticle.SetActive(true);
+                    audioController.PlayLoopAudio(AudioType.SFX_Anticipation);
                     var extraSpinDistance = reelT.localPosition.y + spinIteration * 15;
                     var extraSpinDuration = extraSpinDistance / spinIteration / 4f;
                     reelT.DOLocalMoveY(extraSpinDistance, extraSpinDuration)

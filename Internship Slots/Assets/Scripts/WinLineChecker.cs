@@ -14,11 +14,13 @@ public class WinLineChecker : MonoBehaviour
 
     [SerializeField] BalanceController balanceController;
 
+    [SerializeField] AudioController audioController;
+
     private Dictionary<Transform, Symbol> symbolsDictionary;
     private Dictionary<Sprite, float> prizeDictionary;
 
     public static event Action OnReelsStop;
-    public static event Action OnForceSpinStart;
+    //public static event Action OnForceSpinStart;
 
     private void Start()
     {
@@ -40,7 +42,9 @@ public class WinLineChecker : MonoBehaviour
 
         winLinesData = gameConfig.WinLines;
         OnReelsStop += WinLinesAnimation;
-        OnForceSpinStart += ResetWinAnimation;
+        //OnForceSpinStart += ResetWinAnimation;
+
+        ReelSpinner.OnReelsStart += ResetWinAnimation;
     }
 
     public List<Transform> CheckWinLines()
@@ -72,6 +76,7 @@ public class WinLineChecker : MonoBehaviour
         var winSymbols = CheckWinLines();
         if (winSymbols.Count > 0)
         {
+            audioController.PlayAudio(AudioType.SFX_Prize);
             var prize = GetWinPrize(winSymbols);
             balanceController.GetSpinPrize((int)prize);
             FillSymbols(Color.grey);
@@ -150,8 +155,8 @@ public class WinLineChecker : MonoBehaviour
         OnReelsStop?.Invoke();
     }
 
-    public static void ForceSpinStart()
-    {
-        OnForceSpinStart?.Invoke();
-    }
+    //public static void ForceSpinStart()
+    //{
+    //    OnForceSpinStart?.Invoke();
+    //}
 }
